@@ -23,4 +23,4 @@ references:
     full: data/reference_genomes/Shukla_ISO1/shukla_ISO1_cleaned.fasta
 
   Yunnan:
-    main: data/reference_genomes/Yunnan/Yunnan.fasta
+    full: data/reference_genomes/Yunnan/Yunnan.fasta

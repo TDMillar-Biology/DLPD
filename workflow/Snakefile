@@ -1,18 +1,26 @@
 import pandas as pd
 import os
 
+#Testing
+
 configfile: "config/config.yaml"
 
 os.environ["PYTHONPATH"] = config["daedalus_src"] + ":" + os.environ.get("PYTHONPATH", "")
+
+REF_FASTAS = [v["full"] for v in config["references"].values()]
 
 samples = pd.read_csv(config["control_file"], sep="\t")
 
 STRAINS = samples["strain"].tolist()
 
+PHYLOGENY_STRAINS = STRAINS + ["ISO1"]
+
 def get_assembly(wc):
     return samples.loc[samples.strain == wc.strain, "assembly"].values[0]
 
 def get_reads(wildcards):
+    if wildcards.strain == "ISO1":
+        return "data/ISO1_reads/SRR29479668.fastq"
     return samples.loc[samples.strain == wildcards.strain, "reads"].values[0]
 
 def run_module(module, cmd):
@@ -24,6 +32,8 @@ def run_module(module, cmd):
 include: "rules/assembly.smk"
 include: "rules/mapping.smk"
 include: "rules/quality_control.smk"
+include: "rules/aggregate.smk"
+include: "rules/phylogeny.smk"
 
 rule all:
     input:
@@ -35,4 +45,10 @@ rule all:
         #expand("results/{strain}/compleasm", strain=STRAINS) does not behave in offline mode
         expand("results/{strain}/busco", strain=STRAINS),
         expand("results/{strain}/mummer/{strain}_r6_main_curated.delta", strain=STRAINS),
-        expand("results/{strain}/scaffold/{strain}.scaffolded.fasta", strain=STRAINS)
+        expand("results/{strain}/scaffold/{strain}.scaffolded.fasta", strain=STRAINS),
+        expand("results/aggregate/plots/contiguity.png"),
+        expand("results/aggregate/tables/assembly_metrics.tsv"),
+        expand("results/{strain}/qc/{strain}.seqkit.stats.tsv", strain=STRAINS),
+        expand("results/{strain}/qc/{strain}.scaffold.stats.tsv", strain=STRAINS),
+        expand("results/{strain}/phylogeny/mapping/{strain}_ref.bam", strain=PHYLOGENY_STRAINS),
+        expand("results/aggregate/phylogeny/core_genome.filtered.varsites.fasta.treefile")

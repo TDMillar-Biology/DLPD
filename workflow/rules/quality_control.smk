@@ -61,7 +61,6 @@ rule compute_qv:
         vcf="results/{strain}/variants/{strain}_pmdv.vcf.gz",
         assembly="results/{strain}/assembly/{strain}.bp.p_ctg.fasta"
     output:
-        dir=directory("results/{strain}/qc"),
         tsv="results/{strain}/qc/{strain}_qc.tsv"
     conda:
         "../envs/assembly_qc.yaml"
@@ -74,7 +73,7 @@ rule compute_qv:
         "logs/qv/{strain}.log"
     shell:
         """
-        mkdir -p "{output.dir}"
+        mkdir -p results/{wildcards.strain}/qc logs/qv
 
         python3 workflow/scripts/qv_from_vcf.py \
             --vcf {input.vcf} \
@@ -82,6 +81,47 @@ rule compute_qv:
             --fasta {input.assembly} \
             --output {output.tsv} \
             --min_gq 20 \
-            > {log}
+            > {log} 2>&1
         """
 
+rule seqkit_stats:
+    input:
+        fasta="results/{strain}/curated_assembly/{strain}.curated.fasta"
+    output:
+        stats="results/{strain}/qc/{strain}.seqkit.stats.tsv"
+    resources:
+        mem_mb=8000,
+        runtime=30,
+        ntasks=1
+    conda:
+        "../envs/seqkit.yaml"
+    log:
+        "logs/seqkit/{strain}.log"
+    shell:
+        """
+        mkdir -p results/{wildcards.strain}/qc logs/seqkit
+
+        seqkit stats -a {input.fasta} \
+            > {output.stats} \
+            2> {log}
+        """
+
+rule seqkit_stats_scaffold:
+    input:
+        fasta="results/{strain}/scaffold/{strain}.scaffolded.fasta"
+    output:
+        stats="results/{strain}/qc/{strain}.scaffold.stats.tsv"
+    resources:
+        mem_mb=8000,
+        runtime=30,
+        ntasks=1
+    conda:
+        "../envs/seqkit.yaml"
+    log:
+        "logs/seqkit/{strain}.scaffold.log"
+    shell:
+        """
+        seqkit stats -a {input.fasta} \
+            > {output.stats} \
+            2> {log}
+        """

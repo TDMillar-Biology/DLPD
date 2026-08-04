@@ -1,0 +1,14 @@
+Bootstrap: docker
+From: continuumio/miniconda3
+
+%post
+    conda install -y -c conda-forge -c bioconda \
+        python=3.10 \
+        numpy \
+        pandas \
+        matplotlib \
+        biopython=1.79 \
+        minimap2 \
+        samtools
+
+    conda clean -a -y

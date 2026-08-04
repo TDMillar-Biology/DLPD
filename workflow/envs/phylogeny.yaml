@@ -1,0 +1,9 @@
+name: phylogeny
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - bcftools=1.21
+  - iqtree=2.3.6
+  - snp-sites

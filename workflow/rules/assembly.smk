@@ -96,8 +96,8 @@ rule curate_assembly:
     output:
         fasta="results/{strain}/curated_assembly/{strain}.curated.fasta",
         break_log="results/{strain}/curated_assembly/{strain}.curated.log"
-    conda:
-        "../envs/python.yaml"
+    container:
+        "containers/python.sif"
     resources:
         mem_mb=16000,
         runtime=60,
@@ -153,8 +153,8 @@ rule scaffold_with_daedalus:
         mem_mb=16000,
         runtime=120,
         ntasks=1
-    conda:
-        "../envs/daedalus.yaml"
+    container:
+        "containers/daedalus.sif"
     log:
         "logs/scaffold/{strain}.log"
     shell:
@@ -163,12 +163,11 @@ rule scaffold_with_daedalus:
 
         # Step 1: delta → coords
         show-coords -rclT {input.delta} > {output.coords}
-
-        # Temporary method for accessing daedalus, once published on pypi this changes
-        run_module("daedalus",
-            "--coords {input.coords} "
-            "--output {output.fasta} "
-            "--threads {threads} "
-            "> {log} 2>&1"
-        )
-        """
+        # Step 2: run daedalus
+        daedalus scaffold \
+            --coords {output.coords} \
+            --fasta {input.fasta} \
+            --prefix {wildcards.strain}.scaffolded \
+            --out_dir results/{wildcards.strain}/scaffold \
+            > logs/scaffold/{wildcards.strain}.log 2>&1
+      """
