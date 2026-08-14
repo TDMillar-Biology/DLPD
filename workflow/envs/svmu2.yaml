@@ -1,3 +1,8 @@
+name: svmu2
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
 dependencies:
   - python=3.10
   - numpy
@@ -8,6 +13,5 @@ dependencies:
   - intervaltree
   - pymannkendall
   - pip
-
   - pip:
-      - ../../workflow/tools/svmu2
+    - ../../workflow/tools/svmu2 ## when this is copied and hashed this will be relative to copied location

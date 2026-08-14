@@ -1,3 +1,4 @@
+# config.yaml
 control_file: "config/master_control.tsv"
 
 containers:
@@ -8,6 +9,9 @@ busco:
   lineage: diptera_odb10
 
 daedalus_src: /scratch/group/chakraborty_lab/trevor/projects/dlpd_snakemake/workflow/tools/daedalus/src
+
+pangenome_reference: "ISO1"
+pangenome_reference_path: "data/reference_genomes/ISO1-r6/ISO1-r6.58.fasta"
 
 references:
   ISO1:

@@ -2,7 +2,6 @@ executor: slurm
 jobs: 11
 latency-wait: 120
 
-# This must be a mapping (key: value), not a list (-)
 default-resources:
   slurm_account: !!str "132714815093"
   slurm_partition: "medium"

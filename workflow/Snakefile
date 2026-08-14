@@ -34,6 +34,8 @@ include: "rules/mapping.smk"
 include: "rules/quality_control.smk"
 include: "rules/aggregate.smk"
 include: "rules/phylogeny.smk"
+include: "rules/pangenome.smk"
+include: "rules/genome_to_genome.smk"
 
 rule all:
     input:
@@ -51,4 +53,6 @@ rule all:
         expand("results/{strain}/qc/{strain}.seqkit.stats.tsv", strain=STRAINS),
         expand("results/{strain}/qc/{strain}.scaffold.stats.tsv", strain=STRAINS),
         expand("results/{strain}/phylogeny/mapping/{strain}_ref.bam", strain=PHYLOGENY_STRAINS),
-        expand("results/aggregate/phylogeny/core_genome.filtered.varsites.fasta.treefile")
+        "results/aggregate/phylogeny/core_genome.filtered.varsites.fasta.treefile",
+        "results/pangenome/cactus_out/pangenome.gfa",
+        expand("results/{strain}/mapping/ISO1_to_{strain}.bam", strain=STRAINS)
