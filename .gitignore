@@ -10,3 +10,4 @@ workflow/tools/
 tmp/
 containers/
 workflow/containers/images/*.sif
+testing/*.gfa.gz
