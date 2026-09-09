@@ -8,3 +8,4 @@ workflow/tools/
 .cache/
 tmp/
 containers/
+workflow/containers/images/*.sif

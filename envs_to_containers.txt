@@ -1,0 +1,18 @@
+old Conda env                 new container
+------------------------------------------------
+python.yaml                   python_mummer.sif
+breakasm.yaml                 python_mummer.sif
+mummer.yaml                   python_mummer.sif
+
+daedalus.yaml                 daedalus.sif
+
+mapping.yaml                  genome_to_genome.sif
+svmu2.yaml                    genome_to_genome.sif
+genome_to_genome.yaml         genome_to_genome.sif
+assembly_qc.yaml              genome_to_genome.sif
+
+busco.yaml                    busco.sif
+compleasm.yaml                compleasm.sif
+phylogeny.yaml                phylogeny.sif
+hifiasm/assembly yaml         assembly.sif
+seqkit.yaml                   seqkit.sif

@@ -2,11 +2,15 @@ name: daedalus
 channels:
   - bioconda
   - conda-forge
+  - defaults
 dependencies:
-  - python
+  - python=3.10
   - pandas
   - numpy
   - matplotlib
   - plotly
   - biopython
   - mummer4
+  - pip
+  - pip:
+    - ../../workflow/tools/daedalus

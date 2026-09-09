@@ -1,21 +1,29 @@
-#!/usr/bin/env python
+#!/usr/init/env python
 
 import argparse
 from pathlib import Path
 from Bio import SeqIO
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 import numpy as np
 
 def get_contiguity_data(fasta):
-    """Returns sorted lengths and cumulative sum."""
+    """Returns sorted tuples of (length, index_number) and cumulative sums."""
     try:
-        lengths = sorted(
+        raw_lengths = sorted(
             [len(r.seq) for r in SeqIO.parse(fasta, "fasta")],
             reverse=True
         )
-        if not lengths:
+        if not raw_lengths:
             return None, None
-        return np.array(lengths), np.cumsum(lengths)
+        
+        # Create tuples of (length, index_number) where index is 1-based
+        contig_tuples = [(length, i + 1) for i, length in enumerate(raw_lengths)]
+        
+        lengths_arr = np.array([t[0] for t in contig_tuples])
+        cumsum_arr = np.cumsum(lengths_arr)
+        
+        return contig_tuples, cumsum_arr
     except Exception as e:
         print(f"[ERROR] Could not parse {fasta}: {e}")
         return None, None
@@ -26,7 +34,7 @@ def plot_contiguity(
     reference_fastas=None,
     strains=None,
     assembly_pattern="curated_assembly/*.fasta",
-    genome_size=180000000  # Default for Drosophila (180Mb)
+    max_contigs=100
 ):
     results_dir = Path(results_dir)
     
@@ -34,17 +42,25 @@ def plot_contiguity(
     plt.style.use('seaborn-v0_8-whitegrid') 
     fig, ax = plt.subplots(figsize=(9, 6))
 
-    # 1. References (Gray lines)
+    # ==========================================
+    # PLUG IT IN RIGHT HERE (References Section)
+    # ==========================================
     if reference_fastas:
-        for ref_path in reference_fastas:
+        # Generates distinct shades, avoiding pure white or black, scaling to any number of references
+        ref_colors = plt.cm.Greys(np.linspace(0.3, 0.8, len(reference_fastas)))
+        ref_styles = ['--', '-.', ':', '-']
+        
+        for idx, ref_path in enumerate(reference_fastas):
             ref_path = Path(ref_path)
-            lengths, cumsum = get_contiguity_data(ref_path)
+            contig_tuples, cumsum = get_contiguity_data(ref_path)
             if cumsum is None: continue
             
-            # X-axis is the index of contigs, but we will focus on the curve shape
-            x_pct = (cumsum / genome_size) * 100
-            ax.plot(x_pct, lengths / 1e6, color='#95a5a6', alpha=0.6, 
-                    linestyle='--', linewidth=1.5, label=f"{ref_path.stem} (Ref)")
+            x_indices = [t[1] for t in contig_tuples]
+            y_cumsum_mb = cumsum / 1e6
+            
+            ax.plot(x_indices, y_cumsum_mb, color=ref_colors[idx], alpha=0.9, 
+                    linestyle=ref_styles[idx % len(ref_styles)], linewidth=1.8, 
+                    label=f"{ref_path.stem} (Ref)")
 
     # 2. Strains (Primary Data)
     if strains is None:
@@ -58,26 +74,30 @@ def plot_contiguity(
         fasta_files = list((results_dir / strain).glob(assembly_pattern))
         if not fasta_files: continue
         
-        lengths, cumsum = get_contiguity_data(fasta_files[0])
+        contig_tuples, cumsum = get_contiguity_data(fasta_files[0])
         if cumsum is None: continue
 
-        # The 'NG' style curve: Y = contig length, X = cumulative % of genome
-        x_pct = (cumsum / genome_size) * 100
+        x_indices = [t[1] for t in contig_tuples]
+        y_cumsum_mb = cumsum / 1e6
         
-        # We plot the 'step' to show where each contig ends
-        ax.step(x_pct, lengths / 1e6, color=colors[i], linewidth=2, 
-                where='post', label=strain, alpha=0.8, zorder=3)
+        ax.plot(x_indices, y_cumsum_mb, color=colors[i], linewidth=2, 
+                linestyle='-', label=strain, alpha=0.8, zorder=3)
 
-    # 3. Formatting to match Nature/Science standards
-    ax.set_xlabel("Percentage of Genome Size (%)", fontsize=12, fontweight='bold')
-    ax.set_ylabel("Contig Length (Mb)", fontsize=12, fontweight='bold')
-    ax.set_title("Contiguity (NG) Curve", fontsize=14, pad=15, fontweight='bold')
+    # 3. Formatting to match standards
+    ax.set_xlabel("Contig Index (Rank, log10)", fontsize=12, fontweight='bold')
+    ax.set_ylabel("Cumulative Assembly Length (Mb)", fontsize=12, fontweight='bold')
+    ax.set_title("Cumulative Assembly Footprint", fontsize=14, pad=15, fontweight='bold')
 
-    # Add N50 reference line
-    ax.axvline(50, color='black', linestyle=':', alpha=0.4, zorder=1)
-    ax.text(51, ax.get_ylim()[1]*0.9, 'N50', fontsize=10, color='black', alpha=0.6)
+    # Apply Log Scale to X-axis
+    ax.set_xscale('log')
+    ax.set_xlim(1, max_contigs)
 
-    ax.set_xlim(0, 105) # Allow slightly over 100% for assemblies larger than ref
+    # Custom X-axis ticks and integer labels
+    desired_ticks = [1, 5, 20, 100]
+    ax.set_xticks(desired_ticks)
+    ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
+    ax.ticklabel_format(style='plain', axis='x')
+
     ax.set_ylim(0, None)
     
     # Grid and Legend
@@ -98,8 +118,7 @@ def main():
     parser.add_argument("--reference-fastas", nargs="*", default=[])
     parser.add_argument("--strains", nargs="*")
     parser.add_argument("--pattern", default="curated_assembly/*.fasta") 
-    parser.add_argument("--genome-size", type=int, default=180000000)
-
+    parser.add_argument("--max-contigs", type=int, default = 100)
     args = parser.parse_args()
 
     plot_contiguity(
@@ -108,7 +127,7 @@ def main():
         reference_fastas=args.reference_fastas,
         strains=args.strains,
         assembly_pattern=args.pattern,
-        genome_size=args.genome_size
+        max_contigs=args.max_contigs
     )
 
 if __name__ == "__main__":

@@ -1,0 +1,8 @@
+k_genomes	node_count	genomes_in_subset
+1	3	sampleA
+1	3	sampleB
+1	2	sampleC
+2	4	sampleA,sampleB
+2	4	sampleA,sampleC
+2	4	sampleB,sampleC
+3	5	sampleA,sampleB,sampleC

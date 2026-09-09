@@ -5,7 +5,6 @@ Operations to classify SV types according to geometry of models.line_segment obj
 '''
 
 from svmu2.models.line_segment import DotPlotLineSegment
-import pdb
 
 def is_small(x, threshold = 20): #20 nucleotides is what mummer is capable of detecting per publication
     return abs(x) < threshold
@@ -81,7 +80,7 @@ def classify_sv(segment, domain_tree, range_tree, write_bnds=False):
             segment.sv_type = 'DEL'
             # Search range for potential relocated sequence
             if write_bnds:
-                for start, stop, hit in range_hits:
+                for _overlap_length, hit in range_hits:
                     bnd = DotPlotLineSegment(
                         chrom=segment.chrom,
                         reference_start=hit.reference_start,
@@ -109,7 +108,7 @@ def classify_sv(segment, domain_tree, range_tree, write_bnds=False):
             segment.sv_type = 'INS'
             # Search domain for potential insertion source
             if write_bnds:
-                for start, stop, hit in domain_hits:
+                for _overlap_length, hit in domain_hits:
                     bnd = DotPlotLineSegment(
                         chrom=segment.chrom,
                         reference_start=hit.reference_start,
@@ -141,7 +140,7 @@ def classify_sv(segment, domain_tree, range_tree, write_bnds=False):
         segment.sv_type = 'COMPLEX'
         
     if write_bnds:
-        for start, stop, hit in domain_hits:
+        for _overlap_length, hit in domain_hits:
             bnd = DotPlotLineSegment(
                 chrom=segment.chrom,
                 reference_start=hit.reference_start,
@@ -155,7 +154,7 @@ def classify_sv(segment, domain_tree, range_tree, write_bnds=False):
             bnd.event_ID = event_id
             sv_records.append(bnd)
 
-        for start, stop, hit in range_hits:
+        for _overlap_length, hit in range_hits:
             bnd = DotPlotLineSegment(
                 chrom=segment.chrom,
                 reference_start=hit.reference_start,
@@ -224,50 +223,200 @@ def find_theta(obj1, obj2):
     
     return angle_deg
 
-def extract_dotplot_segments_from_path(block_path, slope, reference_name, domain_tree, range_tree, write_bnds=False):
+def extract_collinear_gap_segments_from_path(
+    block_path,
+    reference_name,
+    domain_tree,
+    range_tree,
+    write_bnds=False
+):
+    """
+    Extract SV-like dotplot segments between adjacent collinear syntenic blocks.
+
+    Important:
+    This function intentionally ignores transitions involving inversion-oriented
+    blocks. Inversions are called separately by inversion_calling().
+    """
     all_segments = []
+
+    if block_path is None:
+        return all_segments
 
     for i in range(len(block_path) - 1):
         a, b = block_path[i], block_path[i + 1]
-        theta = find_theta(a, b)
-        if a.rounded_slope == b.rounded_slope == slope:
-            segment = DotPlotLineSegment(
-                chrom=reference_name,
-                reference_start=a.reference_end,
-                reference_end=b.reference_start,
-                query_start=a.query_end,
-                query_end=b.query_start,
-                sv_type=None,
-                theta=theta,
-                index=i
-            )
-            if write_bnds:
-                segments = classify_sv(segment, domain_tree, range_tree, write_bnds=True)
-            else:
-                segments = classify_sv(segment, domain_tree, range_tree)
+        
+        if not (is_main_orientation(a) and is_main_orientation(b)):
+            continue
 
-            all_segments.extend(segments)
-        elif a.rounded_slope == slope and a.rounded_slope != b.rounded_slope:
-            # enter inversion from left DO NOTHING 
-            pass
+        theta = find_theta(a, b)
+
+        segment = DotPlotLineSegment(
+            chrom=reference_name,
+            reference_start=a.reference_end,
+            reference_end=b.reference_start,
+            query_start=a.query_end,
+            query_end=b.query_start,
+            sv_type=None,
+            theta=theta,
+            index=i
+        )
+
+        segments = classify_sv(
+            segment,
+            domain_tree,
+            range_tree,
+            write_bnds=write_bnds
+        )
+
+        all_segments.extend(segments)
 
     return all_segments
 
-def inversion_calling(syntenic_path, slope):
-    inversion_svs = []
-    inversions = [b for b in syntenic_path if b.rounded_slope * slope == -1]
-    for index, inv in enumerate(inversions):
-        inv_sv = DotPlotLineSegment(
-            chrom=inv.reference,
-            reference_start=inv.reference_start,
-            reference_end=inv.reference_end,
-            query_start=inv.query_start,
-            query_end=inv.query_end,
-            sv_type='INV',
-            theta=0,
-            index=index
-        )
-        inv_sv.event_ID = f'inv_{inv.reference}_{index:04}'
+## Inversion handling ##
 
+def is_main_orientation(block):
+    # If it wasn't flagged as reflected during traversal, it's on the main path
+    return not getattr(block, 'reflected', False)
+
+def is_macro_inversion(block):
+    """Flagged by the global dynamic programming traversal."""
+    return getattr(block, 'reflected', False)
+
+def is_micro_inversion(block, global_slope):
+    """Locally inverted vector geometry, but NOT part of a macro-event."""
+    if is_macro_inversion(block):
+        return False
+    return block.rounded_slope * global_slope == -1
+
+def group_micro_inversions(syntenic_path, slope):
+    '''
+    group consecutive inverted alignment blocks as candidates to be the same inversion.
+    This is fragile if the blocks are not colinear
+    Need to add colinearity check, could sample distribution from global aln
+    '''
+    groups = []
+    current = []
+
+    for block in syntenic_path:
+        if is_micro_inversion(block, slope):
+            current.append(block)
+        else:
+            if current:
+                groups.append(current)
+                current = []
+    if current:
+        groups.append(current)
+    return groups
+
+def call_micro_inversions(syntenic_path, slope, starting_index=0):
+    """
+    search for micro events of inversion which would not be detected in the dynp search (ie lost to heterochromatic noise)
+    """
+    inversion_svs = []
+    if not syntenic_path or slope is None:
+        return inversion_svs
+
+    inversion_groups = group_micro_inversions(syntenic_path, slope)
+
+    for i, group in enumerate(inversion_groups):
+        index = starting_index + i
+        ref_start = min(b.left_most for b in group)
+        ref_end = max(b.right_most for b in group)
+
+        if slope == 1:
+            query_start = max(b.top for b in group)
+            query_end = min(b.bottom for b in group)
+        else:
+            query_start = min(b.bottom for b in group)
+            query_end = max(b.top for b in group)
+
+        inv_sv = DotPlotLineSegment(
+            chrom=group[0].reference,
+            reference_start=ref_start,
+            reference_end=ref_end,
+            query_start=query_start,
+            query_end=query_end,
+            sv_type="INV",
+            theta=0,
+            index=index,
+        )
+
+        inv_sv.event_ID = f"inv_micro_{group[0].reference}_{index:04}"
+        inv_sv.block_count = len(group)
         inversion_svs.append(inv_sv)
+
     return inversion_svs
+
+def call_macro_inversions(final_path_segments, global_slope, starting_index=0):
+    """
+    Derives macro-inversions directly from the partition metadata.
+    Any selected partition whose local orientation disagrees with the global
+    slope is emitted as a macro-inversion candidate.
+    """
+    macro_svs = []
+    if not final_path_segments or global_slope is None:
+        return macro_svs
+
+    for offset, segment in enumerate(final_path_segments):
+        segment_orientation = segment.orientation
+        segment_orientation_sign = segment.orientation_sign
+        if segment_orientation_sign == global_slope:
+            continue
+
+        path_blocks = segment.traversal_data.get("path_blocks", [])
+        if not path_blocks:
+            continue
+
+        index = starting_index + offset
+        ref_start = min(block.left_most for block in path_blocks)
+        ref_end = max(block.right_most for block in path_blocks)
+
+        if global_slope == 1:
+            query_start = max(block.top for block in path_blocks)
+            query_end = min(block.bottom for block in path_blocks)
+        else:
+            query_start = min(block.bottom for block in path_blocks)
+            query_end = max(block.top for block in path_blocks)
+
+        inv_sv = DotPlotLineSegment(
+            chrom=path_blocks[0].reference,
+            reference_start=ref_start,
+            reference_end=ref_end,
+            query_start=query_start,
+            query_end=query_end,
+            sv_type="INV",
+            theta=0,
+            index=index,
+        )
+
+        inv_sv.event_ID = f"inv_macro_{path_blocks[0].reference}_{index:04}"
+        inv_sv.block_count = len(path_blocks)
+        inv_sv.block_indices = [block.index for block in path_blocks]
+        inv_sv.partition_row = segment.row
+        inv_sv.partition_col = segment.col
+        inv_sv.partition_orientation = segment_orientation
+        inv_sv.partition_orientation_sign = segment_orientation_sign
+        macro_svs.append(inv_sv)
+
+
+    return macro_svs
+
+def call_all_inversions(final_path_segments, primary_synteny_blocks, global_slope):
+    """
+    Executes both the topological (macro) and geometrical (micro) inversion 
+    callers, returning a unified list of SV events.
+    """
+    # Macro uses the partition dictionaries
+    macro_inversions = call_macro_inversions(
+        final_path_segments, 
+        global_slope
+    )
+    
+    # Micro uses the flattened blocks to find local geometric inversions
+    micro_inversions = call_micro_inversions(
+        primary_synteny_blocks, 
+        global_slope, 
+        starting_index=len(macro_inversions)
+    )
+
+    return macro_inversions + micro_inversions

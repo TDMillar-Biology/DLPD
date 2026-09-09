@@ -20,7 +20,7 @@ def build_alignment_primitives(aln, SVs=None, x_marker=None):
             LinePrimitive(
                 x=(block.reference_start, block.reference_end),
                 y=(block.query_start, block.query_end),
-                color="Black",
+                color="black",
                 hover_text = f"({block.reference_start}, {block.query_start}) - ({block.reference_end}, {block.query_end})"
             )   
         )
@@ -30,7 +30,7 @@ def build_alignment_primitives(aln, SVs=None, x_marker=None):
                 LinePrimitive(
                     x=(block.reference_start, block.reference_end),
                     y=(block.query_start, block.query_end),
-                    color="Blue",
+                    color="blue",
                     hover_text = f"({block.reference_start}, {block.query_start}) - ({block.reference_end}, {block.query_end})"
                 )   
             )
@@ -38,9 +38,9 @@ def build_alignment_primitives(aln, SVs=None, x_marker=None):
         for SV in SVs:
             primitives.append(
                 LinePrimitive(
-                    x=(block.reference_start, block.reference_end),
-                    y=(block.query_start, block.query_end),
-                    color="Orange"
+                    x=(SV.reference_start, SV.reference_end),
+                    y=(SV.query_start, SV.query_end),
+                    color="orange"
                 )   
             )
 

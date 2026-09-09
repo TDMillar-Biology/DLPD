@@ -1,2 +1,9 @@
 *.egg-info/
 __pycache__/
+
+# large test/reference FASTA files
+tests/*.fasta
+tests/*.fna
+tests/ragtag_output/*.fasta
+tests/trend_debug/*
+tests

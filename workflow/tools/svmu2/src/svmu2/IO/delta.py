@@ -5,7 +5,6 @@ read delta file format into models.alignment.Alignment object
 
 from svmu2.models.alignment import Alignment
 
-
 def parse_delta_file(file_path):
     alignments = []
  

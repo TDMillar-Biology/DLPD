@@ -60,7 +60,7 @@ def write_vcf(SVs, output_path="output.vcf", sample='SAMPLE'):
 
         record = vcf_out.new_record(
             contig=chrom,
-            start=pos,
+            start=pos - 1,
             stop=end,
             alleles=(ref_base, alt),
             id=f'sv_{i}',

@@ -21,7 +21,7 @@ references:
   A4:
     main: data/reference_genomes/A4/A4_hifiasm_hic_scaffs_3L3R.fa
     full: data/reference_genomes/A4/A4_hifiasm_hic_scaffs_1126.fa
-
+    
   Shukla_ISO1:
     main: data/reference_genomes/Shukla_ISO1/shukla_ISO1_main.fasta
     full: data/reference_genomes/Shukla_ISO1/shukla_ISO1_cleaned.fasta

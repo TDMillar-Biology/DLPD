@@ -1,0 +1,20 @@
+name: genome_to_genome
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+
+dependencies:
+  - minimap2=2.29
+  - samtools=1.21
+  - python=3.10
+  - numpy
+  - pysam
+  - matplotlib
+  - plotly
+  - networkx
+  - intervaltree
+  - pymannkendall
+  - pip
+  - pip:
+    - ../../workflow/tools/svmu2 # local fix temporary

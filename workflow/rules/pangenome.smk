@@ -26,26 +26,27 @@ rule build_pangenome_graph:
         seqfile = "results/pangenome/seqfile.txt"
     output:
         outdir = directory("results/pangenome/cactus_out"),
-        gfa = "results/pangenome/cactus_out/pangenome.gfa"
+        gfa = "results/pangenome/cactus_out/PANGENOME_REF.gfa.gz"
     log:
         "logs/pangenome/cactus_pangenome.log"
     threads: 32
     resources:
         mem_mb = 128000,
-        runtime = 2880, # 2 days, probably excessive for melanogaster 11 strains
-        ntasks = 1
+        runtime = 1440, # 1 day, matching the Grace medium partition limit
+        ntasks = 1,
+        slurm_partition = "long" # Overrides the default 'medium'
     container:
         "containers/cactus.sif"
     shell:
         """
         rm -rf ./jobstore_pangenome
 
-        cactus-pangenome \\
-            ./jobstore_pangenome \\
-            {input.seqfile} \\
-            --outDir {output.outdir} \\
-            --outName PANGENOME_REF \\
-            --reference ISO1 \\
-            --maxCores {threads} \\
+        cactus-pangenome \
+            ./jobstore_pangenome \
+            {input.seqfile} \
+            --outDir {output.outdir} \
+            --outName PANGENOME_REF \
+            --reference {PANGENOME_REF} \
+            --maxCores {threads} \
             > {log} 2>&1
         """

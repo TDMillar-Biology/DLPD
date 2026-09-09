@@ -154,7 +154,7 @@ rule scaffold_with_daedalus:
         runtime=120,
         ntasks=1
     container:
-        "containers/daedalus.sif"
+        "workflow/containers/images/daedalus.sif"
     log:
         "logs/scaffold/{strain}.log"
     shell:
@@ -163,11 +163,13 @@ rule scaffold_with_daedalus:
 
         # Step 1: delta → coords
         show-coords -rclT {input.delta} > {output.coords}
+        
         # Step 2: run daedalus
         daedalus scaffold \
             --coords {output.coords} \
             --fasta {input.fasta} \
             --prefix {wildcards.strain}.scaffolded \
             --out_dir results/{wildcards.strain}/scaffold \
-            > logs/scaffold/{wildcards.strain}.log 2>&1
+            --chromosomes X 2L 2R 3L 3R 4 \
+            > {log} 2>&1
       """
