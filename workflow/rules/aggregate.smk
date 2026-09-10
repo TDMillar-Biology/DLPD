@@ -13,7 +13,7 @@ rule plot_contiguity:
     log:
         "logs/contiguity_plot/contiguity.log"
     container:
-        "containers/python.sif"
+        "workflow/containers/images/python_mummer.sif"
     params:
         results_dir = "results",
         # Pattern to find the curated assemblies within each strain folder
@@ -44,7 +44,7 @@ rule aggregate_metrics:
     log:
         "logs/aggregate/aggregate.log"
     container:
-        "containers/python.sif"
+        "workflow/containers/images/python_mummer.sif"
     shell:
         """
         mkdir -p logs/aggregate results/aggregate/tables

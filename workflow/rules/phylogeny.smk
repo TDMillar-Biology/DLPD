@@ -12,8 +12,8 @@ rule map_reads_for_phylogeny:
         mem_mb=64000,
         runtime=600,
         tasks=1
-    conda:
-        "../envs/mapping.yaml"
+    container:
+        "workflow/containers/images/mapping_qc.sif"
     log:
         "logs/phylogeny/mapping/{strain}.log"
     shell:
@@ -70,8 +70,8 @@ rule merge_vcfs:
         mem_mb=16000,
         runtime=120,
         ntasks=1
-    conda:
-        "../envs/phylogeny.yaml"
+    container:
+        "workflow/containers/images/phylogeny.sif"
     log:
         "logs/phylogeny/merge_vcfs.log"
     shell:
@@ -99,8 +99,8 @@ rule vcf_to_fasta:
         mem_mb=8000,
         runtime=30,
         ntasks=1
-    conda:
-        "../envs/python.yaml"
+    container:
+        "workflow/containers/images/python_mummer.sif"
     log:
         "logs/phylogeny/vcf_to_fasta.log"
     shell:
@@ -122,8 +122,8 @@ rule build_ml_tree:
         mem_mb=32000,
         runtime=600,
         ntasks=1
-    conda:
-        "../envs/phylogeny.yaml"
+    container:
+        "workflow/containers/images/phylogeny.sif"
     log:
         "logs/phylogeny/iqtree.log"
     shell:
@@ -142,8 +142,8 @@ rule reheader_vcf:
         tbi = "results/{sample}/phylogeny/variants/{sample}_pmdv.renamed.vcf.gz.tbi"
     log:
         "logs/phylogeny/reheader_{sample}.log"
-    conda: 
-        "../envs/phylogeny.yaml" # Make sure your bcftools/tabix env is referenced here
+    container:
+        "workflow/containers/images/phylogeny.sif" # bcftools/tabix runtime
     threads: 1
     resources:
         mem_mb=32000,
@@ -169,8 +169,8 @@ rule extract_variable_sites:
         fasta="results/aggregate/phylogeny/core_genome.filtered.min4.fasta"
     output:
         varsites="results/aggregate/phylogeny/core_genome.filtered.varsites.fasta"
-    conda:
-        "../envs/phylogeny.yaml"
+    container:
+        "workflow/containers/images/phylogeny.sif"
     threads: 8
     resources:
         mem_mb=32000,

@@ -3,8 +3,8 @@ rule compleasm:
         assembly="results/{strain}/assembly/{strain}.bp.p_ctg.fasta"
     output:
         directory("results/{strain}/compleasm")
-    conda:
-        "../envs/compleasm.yaml"
+    container:
+        "workflow/containers/images/compleasm.sif"
     threads: 8
     resources:
         mem_mb=16000,
@@ -30,8 +30,8 @@ rule busco:
         assembly="results/{strain}/assembly/{strain}.bp.p_ctg.fasta"
     output:
         directory("results/{strain}/busco")
-    conda:
-        "../envs/busco.yaml"
+    container:
+        "workflow/containers/images/busco.sif"
     threads: 8
     resources:
         mem_mb=16000,
@@ -62,8 +62,8 @@ rule compute_qv:
         assembly="results/{strain}/assembly/{strain}.bp.p_ctg.fasta"
     output:
         tsv="results/{strain}/qc/{strain}_qc.tsv"
-    conda:
-        "../envs/assembly_qc.yaml"
+    container:
+        "workflow/containers/images/mapping_qc.sif"
     threads: 1
     resources:
         mem_mb=8000,
@@ -93,8 +93,8 @@ rule seqkit_stats:
         mem_mb=8000,
         runtime=30,
         ntasks=1
-    conda:
-        "../envs/seqkit.yaml"
+    container:
+        "workflow/containers/images/seqkit.sif"
     log:
         "logs/seqkit/{strain}.log"
     shell:
@@ -115,8 +115,8 @@ rule seqkit_stats_scaffold:
         mem_mb=8000,
         runtime=30,
         ntasks=1
-    conda:
-        "../envs/seqkit.yaml"
+    container:
+        "workflow/containers/images/seqkit.sif"
     log:
         "logs/seqkit/{strain}.scaffold.log"
     shell:

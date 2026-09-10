@@ -10,8 +10,8 @@ rule map_reads:
         mem_mb=64000,
         runtime=600,
         tasks=1
-    conda:
-        "../envs/mapping.yaml"
+    container:
+        "workflow/containers/images/mapping_qc.sif"
     log:
         "logs/mapping/{strain}.log"
     shell:

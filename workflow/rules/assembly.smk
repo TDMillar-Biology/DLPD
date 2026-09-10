@@ -5,8 +5,8 @@ rule assemble:
         hap1="results/{strain}/assembly/{strain}.bp.hap1.p_ctg.gfa",
         hap2="results/{strain}/assembly/{strain}.bp.hap2.p_ctg.gfa"
     threads: 16
-    conda:
-        "../envs/assembly.yaml"
+    container:
+        "workflow/containers/images/assembly.sif"
     resources:
         mem_mb=64000,
         runtime=600,
@@ -55,8 +55,8 @@ rule mummer_for_curation:
         runtime=120,
         tasks=1
     threads: 8
-    conda:
-        "../envs/mummer.yaml"
+    container:
+        "workflow/containers/images/python_mummer.sif"
     shell:
         """
         mkdir -p results/{wildcards.strain}/mummer
@@ -75,8 +75,8 @@ rule dotplot:
         mem_mb=1600,
         runtime=60,
         ntasks=1
-    conda:
-        "../envs/svmu2.yaml"
+    container:
+        "workflow/containers/images/svmu2.sif"
     log:
         "logs/dotplot/{strain}.log"
     shell:
@@ -97,7 +97,7 @@ rule curate_assembly:
         fasta="results/{strain}/curated_assembly/{strain}.curated.fasta",
         break_log="results/{strain}/curated_assembly/{strain}.curated.log"
     container:
-        "containers/python.sif"
+        "workflow/containers/images/python_mummer.sif"
     resources:
         mem_mb=16000,
         runtime=60,
@@ -129,8 +129,8 @@ rule mummer_for_scaffolding:
         runtime=120,
         tasks=1
     threads: 8
-    conda:
-        "../envs/mummer.yaml"
+    container:
+        "workflow/containers/images/python_mummer.sif"
     shell:
         """
         mkdir -p results/{wildcards.strain}/mummer

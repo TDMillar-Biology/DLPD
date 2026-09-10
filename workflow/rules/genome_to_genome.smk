@@ -10,8 +10,8 @@ rule align_iso1_to_assembly:
         runtime=60,
         ntasks=1,
         slurm_partition="medium"
-    conda:
-        "../envs/genome_to_genome.yaml"
+    container:
+        "workflow/containers/images/mapping_qc.sif"
     log:
         "logs/mapping/ISO1_to_{strain}.log"
     shell:
@@ -36,8 +36,8 @@ rule svmu_filter_main_diagonal:
         runtime=30,
         ntasks=1,
         slurm_partition="short"
-    conda:
-        "../envs/genome_to_genome.yaml"
+    container:
+        "workflow/containers/images/svmu2.sif"
     log:
         "logs/mapping/svmu_filter_{strain}.log"
     shell:
@@ -68,8 +68,8 @@ rule paftools_call_micro_variants:
         runtime=30,
         ntasks=1,
         slurm_partition="short"
-    conda:
-        "../envs/genome_to_genome.yaml"
+    container:
+        "workflow/containers/images/mapping_qc.sif"
     log:
         "logs/variants/paftools_call_{strain}.log"
     shell:
