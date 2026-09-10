@@ -1,8 +1,24 @@
+rule download_compleasm_db:
+    output:
+        touch("data/compleasm_downloads/diptera_odb12.2.done")
+    container:
+        "workflow/containers/images/compleasm.sif"
+    shell:
+        """
+        compleasm download diptera \
+            --odb odb12.2 \
+            -L data/compleasm_downloads
+        """
+
 rule compleasm:
     input:
-        assembly="results/{strain}/assembly/{strain}.bp.p_ctg.fasta"
+        assembly="results/{strain}/assembly/{strain}.bp.p_ctg.fasta",
+        db="data/compleasm_downloads/diptera_odb12.2.done"
     output:
-        directory("results/{strain}/compleasm")
+        summary="results/{strain}/compleasm/summary.txt"
+    params:
+        outdir="results/{strain}/compleasm",
+        library="data/compleasm_downloads"
     container:
         "workflow/containers/images/compleasm.sif"
     threads: 8
@@ -13,21 +29,34 @@ rule compleasm:
         "logs/compleasm/{strain}.log"
     shell:
         """
-        mkdir -p {output}
+        mkdir -p {params.outdir}
 
-        compleasm.py run \
+        compleasm run \
             -a {input.assembly} \
-            -o {output} \
+            -o {params.outdir} \
             -t {threads} \
             -l diptera \
-            --odb odb10 \
-            -L data/ortholog_databases \
+            --odb odb12.2 \
+            -L {params.library} \
             > {log} 2>&1
+        """
+
+rule download_busco_db:
+    output:
+        directory("data/busco_downloads/lineages/diptera_odb12.2")
+    container:
+        "workflow/containers/images/busco.sif"
+    shell:
+        """
+        busco \
+            --download diptera_odb12.2 \
+            --download_path data/busco_downloads
         """
 
 rule busco:
     input:
-        assembly="results/{strain}/assembly/{strain}.bp.p_ctg.fasta"
+        assembly="results/{strain}/assembly/{strain}.bp.p_ctg.fasta",
+        db=directory("data/busco_downloads/lineages/diptera_odb12.2")
     output:
         directory("results/{strain}/busco")
     container:
@@ -38,22 +67,27 @@ rule busco:
         runtime=120
     log:
         "logs/busco/{strain}.log"
-    params:
-        lineage=config["busco"]["lineage"],
-        db_dir=config["busco"]["db_dir"]
     shell:
         """
         busco \
             -i {input.assembly} \
             -o busco \
             --out_path results/{wildcards.strain} \
-            -l {params.lineage} \
-            --download_path {params.db_dir} \
+            -l diptera_odb12.2 \
+            --download_path data/busco_downloads \
             -m genome \
             -c {threads} \
             --offline \
             -f \
             > {log} 2>&1
+
+
+        # prevent metadata overload
+        rm -rf \
+            results/{wildcards.strain}/busco/run_diptera_odb12.2/busco_sequences \
+            results/{wildcards.strain}/busco/run_diptera_odb12.2/hmmer_output \
+            results/{wildcards.strain}/busco/run_diptera_odb12.2/miniprot_output 
+
         """
 
 rule compute_qv:

@@ -83,10 +83,11 @@ rule dotplot:
         """
         mkdir -p {output.outdir}
 
-        python3 workflow/tools/svmu2/src/svmu2/interface/cli.py plot \
-            --delta {input.delta} \
+        svmu2 plot \
+            --alignment {input.delta} \
+            --format delta \
             --out_dir {output.outdir} \
-            > {log} 2>&1
+            --strain {wildcards.strain}_for_curation
         """
 
 rule curate_assembly:
@@ -173,3 +174,105 @@ rule scaffold_with_daedalus:
             --chromosomes X 2L 2R 3L 3R 4 \
             > {log} 2>&1
       """
+
+rule dotplot_curated_all:
+    input:
+        delta="results/{strain}/mummer/{strain}_r6_main_curated.delta"
+    output:
+        outdir=directory("results/{strain}/dotplots/curated_all")
+    resources:
+        mem_mb=1600,
+        runtime=60,
+        tasks=1
+    container:
+        "workflow/containers/images/svmu2.sif"
+    log:
+        "logs/dotplot/{strain}_curated.log"
+    shell:
+        """
+        mkdir -p {output.outdir}
+
+        svmu2 plot \
+            --alignment {input.delta} \
+            --format delta \
+            --out_dir {output.outdir} \
+            --strain {wildcards.strain}_curated \
+            --img-format png \
+            --all \
+            > {log} 2>&1
+        """
+
+rule dotplot_curated:
+    input:
+        delta="results/{strain}/mummer/{strain}_r6_main_curated.delta"
+    output:
+        outdir=directory("results/{strain}/dotplots/curated/")
+    resources:
+        mem_mb=1600,
+        runtime=60,
+        tasks=1
+    container:
+        "workflow/containers/images/svmu2.sif"
+    log:
+        "logs/dotplot/{strain}_curated.log"
+    shell:
+        """
+        mkdir -p {output.outdir}
+
+        svmu2 plot \
+            --alignment {input.delta} \
+            --format delta \
+            --out_dir {output.outdir} \
+            --strain {wildcards.strain}_curated \
+            --img-format png \
+            > {log} 2>&1
+        """
+
+rule mummer_scaffolded:
+    input:
+        reference=config["references"]["ISO1"]["main"],
+        query="results/{strain}/scaffold/{strain}.scaffolded.fasta"
+    output:
+        delta="results/{strain}/mummer/{strain}_r6_main_scaffolded.delta"
+    params:
+        prefix="results/{strain}/mummer/{strain}_r6_main_scaffolded"
+    resources:
+        mem_mb=16000,
+        runtime=120,
+        tasks=1
+    threads: 8
+    container:
+        "workflow/containers/images/python_mummer.sif"
+    shell:
+        """
+        mkdir -p results/{wildcards.strain}/mummer
+
+        nucmer -p {params.prefix} \
+            {input.reference} {input.query} -t {threads}
+        """
+
+
+rule dotplot_scaffolded:
+    input:
+        delta="results/{strain}/mummer/{strain}_r6_main_scaffolded.delta"
+    output:
+        outdir=directory("results/{strain}/dotplots/scaffolded")
+    resources:
+        mem_mb=1600,
+        runtime=60,
+        tasks=1
+    container:
+        "workflow/containers/images/svmu2.sif"
+    log:
+        "logs/dotplot/{strain}_scaffolded.log"
+    shell:
+        """
+        mkdir -p {output.outdir}
+
+        svmu2 plot \
+            --alignment {input.delta} \
+            --format delta \
+            --out_dir {output.outdir} \
+            --strain {wildcards.strain}_scaffolded \
+            > {log} 2>&1
+        """

@@ -55,7 +55,7 @@ rule all:
         #expand("results/{strain}/dotplots/for_curation", strain=STRAINS),
         #expand("results/{strain}/variants", strain=STRAINS),
         #expand("results/{strain}/qc/{strain}_qc.tsv", strain=STRAINS),
-        #expand("results/{strain}/compleasm", strain=STRAINS) does not behave in offline mode
+        expand("results/{strain}/compleasm", strain=STRAINS)
         #expand("results/{strain}/busco", strain=STRAINS),
         #expand("results/{strain}/mummer/{strain}_r6_main_curated.delta", strain=STRAINS),
         #expand("results/{strain}/scaffold/{strain}.scaffolded.fasta", strain=STRAINS),
@@ -64,7 +64,10 @@ rule all:
         #expand("results/{strain}/qc/{strain}.seqkit.stats.tsv", strain=STRAINS),
         #expand("results/{strain}/qc/{strain}.scaffold.stats.tsv", strain=STRAINS),
         #expand("results/{strain}/phylogeny/mapping/{strain}_ref.bam", strain=PHYLOGENY_STRAINS),
-        "results/aggregate/phylogeny/core_genome.filtered.varsites.fasta.treefile",
-        "results/pangenome/cactus_out/PANGENOME_REF.gfa.gz",
+        #"results/aggregate/phylogeny/core_genome.filtered.varsites.fasta.treefile",
+        #"results/pangenome/cactus_out/PANGENOME_REF.gfa.gz",
         #expand("results/{strain}/mapping/ISO1_to_{strain}.bam", strain=STRAINS),
-        expand("results/{strain}/mappable_variants/ISO1_to_{strain}.paftools_micro.vcf", strain=STRAINS)
+        #expand("results/{strain}/mappable_variants/ISO1_to_{strain}.paftools_micro.vcf", strain=STRAINS),
+        expand("results/{strain}/dotplots/curated/main",strain=STRAINS),
+        expand("results/{strain}/dotplots/curated/all",strain=STRAINS),
+        expand("results/{strain}/dotplots/scaffolded",strain=STRAINS)
