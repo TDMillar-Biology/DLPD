@@ -55,7 +55,7 @@ rule all:
         #expand("results/{strain}/dotplots/for_curation", strain=STRAINS),
         #expand("results/{strain}/variants", strain=STRAINS),
         #expand("results/{strain}/qc/{strain}_qc.tsv", strain=STRAINS),
-        expand("results/{strain}/compleasm", strain=STRAINS)
+        #expand("results/{strain}/compleasm", strain=STRAINS),
         #expand("results/{strain}/busco", strain=STRAINS),
         #expand("results/{strain}/mummer/{strain}_r6_main_curated.delta", strain=STRAINS),
         #expand("results/{strain}/scaffold/{strain}.scaffolded.fasta", strain=STRAINS),
@@ -68,6 +68,8 @@ rule all:
         #"results/pangenome/cactus_out/PANGENOME_REF.gfa.gz",
         #expand("results/{strain}/mapping/ISO1_to_{strain}.bam", strain=STRAINS),
         #expand("results/{strain}/mappable_variants/ISO1_to_{strain}.paftools_micro.vcf", strain=STRAINS),
-        expand("results/{strain}/dotplots/curated/main",strain=STRAINS),
-        expand("results/{strain}/dotplots/curated/all",strain=STRAINS),
-        expand("results/{strain}/dotplots/scaffolded",strain=STRAINS)
+        #expand("results/{strain}/dotplots/curated",strain=STRAINS),
+        #expand("results/{strain}/dotplots/curated_all",strain=STRAINS),
+        #expand("results/{strain}/dotplots/scaffolded",strain=STRAINS),
+        expand("results/{strain}/qc/{strain}.contig_flow.png",strain=STRAINS),
+        expand("results/{strain}/qc/{strain}.contig_flow.tsv", strain=STRAINS)

@@ -146,7 +146,8 @@ rule scaffold_with_daedalus:
         fasta="results/{strain}/curated_assembly/{strain}.curated.fasta"
     output:
         coords="results/{strain}/scaffold/{strain}.coords",
-        fasta="results/{strain}/scaffold/{strain}.scaffolded.fasta"
+        fasta="results/{strain}/scaffold/{strain}.scaffolded.fasta",
+        agp="results/{strain}/scaffold/{strain}.scaffolded.agp"
     params:
         prefix="results/{strain}/scaffold/{strain}"
     threads: 4
@@ -274,5 +275,35 @@ rule dotplot_scaffolded:
             --format delta \
             --out_dir {output.outdir} \
             --strain {wildcards.strain}_scaffolded \
+            > {log} 2>&1
+        """
+
+rule plot_contig_flow:
+    input:
+        original="results/{strain}/assembly/{strain}.bp.p_ctg.fasta",
+        curated="results/{strain}/curated_assembly/{strain}.curated.fasta",
+        agp="results/{strain}/scaffold/{strain}.scaffolded.agp"
+    output:
+        plot="results/{strain}/qc/{strain}.contig_flow.png",
+        table="results/{strain}/qc/{strain}.contig_flow.tsv"
+    resources:
+        mem_mb=1600,
+        runtime=60,
+        ntasks=1
+    log:
+        "logs/contig_flow/{strain}.log"
+    container:
+        "workflow/containers/images/python_mummer.sif"
+    shell:
+        """
+        mkdir -p results/{wildcards.strain}/qc logs/contig_flow
+
+        python3 workflow/scripts/plot_contig_flow.py \
+            --original {input.original} \
+            --curated {input.curated} \
+            --agp {input.agp} \
+            --out-plot {output.plot} \
+            --out-table {output.table} \
+            --title "{wildcards.strain} contig flow" \
             > {log} 2>&1
         """
